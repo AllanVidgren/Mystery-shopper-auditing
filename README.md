@@ -1,20 +1,55 @@
-# Mystery Shopper engine
+# AI Mystery Shopper for legal compliance
 
-AI mystery shoppers that talk to a company's sales, cancellation and chat channels, then
-grade every conversation against a legal rulebook. Lawyers confirm or overturn each
-finding. Group Legal sees patterns across countries, not individual conversations.
+**Companies write compliant terms, but customers experience conversations.** This tool tests
+those conversations: AI "mystery shoppers" talk to a company's customer-service chat, and
+every conversation is checked against consumer protection and data protection rules. Each
+finding comes with a quote from the conversation and its legal basis, and a lawyer confirms
+it before anyone acts on it.
 
-> **Background.** The idea came out of a legal AI hackathon, where our team's concept for
-> a home security company's consumer channels was chosen as the case company's favourite.
-> This engine is my continued development of that idea after the event, built with AI-assisted
+> **Background.** The idea came out of a legal AI hackathon, where our team's concept for a
+> home security company's consumer channels was chosen as the case company's favourite. This
+> engine is my continued development of the idea after the event, built with AI-assisted
 > coding. All companies, customers and data in this repository are fictional.
 
-It does four things:
+## What a finding looks like
 
-1. **Deploys shopper bots.** Each bot is a persona (Helmi 86, Max the jailbreaker, Nina the social engineer, ...) with a goal (buy, cancel, ask). It holds a real conversation with a target.
-2. **Reaches real channels.** It talks to chatbots over an HTTP API or drives a website chat widget in a real browser. A simulated agent with planted flaws is included for demos.
-3. **Grades defensibly.** One rule at a time. Legal bases come from the rulebook, never from the model. Every quote is checked against the transcript, and a failure without real evidence becomes "unclear". A second, independent grading runs, and disagreements go to a lawyer.
-4. **Serves two views.** A local lawyer sees one country: transcripts, findings, decisions. A group lawyer sees patterns, a heatmap, scores and escalations only. The API enforces this split.
+*Illustrative example against the bundled demo agent, which has deliberately planted flaws.*
+
+```
+! W1  fail   legal   0.92  Was the price information complete and correct?  -> lawyer
+      turn 3: "Plans start from 29.90 EUR per month"
+      The customer asked for the total cost and contract length. The agent gave only
+      a "from" price and no installation fee or contract length.
+      basis: Consumer Rights Directive 2011/83/EU Art. 6(1)(e); UCPD Art. 7(4)(c)
+      consequence: charges not disclosed cannot be collected (CRD Art. 6(6))
+      fix: "It is 39.90 EUR/month plus a 199 EUR installation fee; minimum term 36 months."
+```
+
+## How it works
+
+1. **AI customers.** Synthetic personas (a confused 86-year-old, a price-focused buyer, a
+   jailbreaker, a social engineer) hold real conversations with a chatbot through its API or
+   through a real browser.
+2. **A rulebook lawyers maintain.** 20 rules for sales, cancellation and chat, written in a
+   YAML file: what to check, whether it is critical, and whether a failure is a **legal** or a
+   **policy** breach. Lawyers change the rules without touching code.
+3. **Defensible grading.** The AI grades one rule at a time and returns structured data. The
+   legal basis is always attached from the rulebook, never written by the AI. Every quote is
+   automatically checked against the transcript; a failure without real evidence becomes
+   "unclear". A second, independent review runs, and disagreements and critical failures go
+   to a lawyer. Every lawyer decision is logged with name and time.
+4. **Privacy by design.** A local lawyer sees their own country's conversations; group legal
+   sees only patterns that repeat across countries. The API enforces this split. Transcripts
+   are deleted after a retention period while findings and quotes are kept.
+5. **Low AI cost.** Economy mode uses scripted questions and keyword pre-checks that can only
+   pass a rule, never fail it, cutting an audit from about 35 AI requests to about 2–8.
+
+**Tech:** Python · Claude or any OpenAI-compatible model (e.g. Gemini) · structured outputs via
+function calling · Playwright · SQLite · Starlette REST API · Docker · 21 offline tests.
+
+---
+
+## For developers
 
 ## Quick start
 

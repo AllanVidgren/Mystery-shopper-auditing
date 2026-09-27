@@ -1,4 +1,0 @@
-cd ~/Git/mystery-shopper
-git init
-git add .
-git status

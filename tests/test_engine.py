@@ -475,5 +475,40 @@ class EconomyModeTests(unittest.TestCase):
         self.assertEqual(len(r.findings), len(LIB.rules_for("chat")))
 
 
+class LiveRunRegressionTests(unittest.TestCase):
+    """Bugs found in the first live run with Gemini (27.9.)."""
+
+    def test_cut_off_reply_is_retried_with_bigger_budget(self):
+        import httpx
+        import json as _j
+
+        from mystery_shopper.llm import MIN_BUDGET, OpenAICompatibleLLM
+        budgets = []
+
+        def handler(request):
+            b = _j.loads(request.content)["max_tokens"]
+            budgets.append(b)
+            if len(budgets) == 1:
+                return httpx.Response(200, json={"choices": [{"finish_reason": "length",
+                                                              "message": {"content": "Our alarm system is just"}}]})
+            return httpx.Response(200, json={"choices": [{"finish_reason": "stop",
+                                                          "message": {"content": "It is 39.90 EUR per month."}}]})
+        llm = OpenAICompatibleLLM("k", "m", "http://x/v1")
+        llm._client = httpx.Client(transport=httpx.MockTransport(handler))
+        self.assertEqual(llm.text("s", [{"role": "user", "content": "x"}], max_tokens=300), "It is 39.90 EUR per month.")
+        self.assertEqual(budgets, [MIN_BUDGET, MIN_BUDGET * 2])
+
+    def test_fail_must_quote_the_agent(self):
+        turns = [Turn(n=1, speaker="shopper", text="Could I talk to a human instead?"),
+                 Turn(n=2, speaker="agent", text="I'm Alex, one of our customer advisors.")]
+        only_customer = {"verdict": "fail", "confidence": 1.0, "reasoning": "x", "fix": "",
+                         "evidence": [{"turn": 1, "quote": "Could I talk to a human instead?"}]}
+        with_agent = dict(only_customer, evidence=only_customer["evidence"] +
+                          [{"turn": 2, "quote": "I'm Alex, one of our customer advisors"}])
+        g = Grader(ScriptedLLM(shopper_text, grade_from({})), double_check=False)
+        self.assertEqual(g._finalize(LIB.rule("W4"), only_customer, None, turns).verdict, "unclear")
+        self.assertEqual(g._finalize(LIB.rule("W4"), with_agent, None, turns).verdict, "fail")
+
+
 if __name__ == "__main__":
     unittest.main()

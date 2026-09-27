@@ -202,6 +202,10 @@ class Grader:
         if verdict == "fail" and not ev_quotes:
             notes.append("Failure without verifiable evidence: downgraded to unclear.")
             verdict = "unclear"
+        agent_turns = {t.n for t in turns if t.speaker == "agent"}
+        if verdict == "fail" and not agent_turns.intersection(ev_turns):
+            notes.append("Failure quotes only the customer, not the agent: downgraded to unclear.")
+            verdict = "unclear"
         needs_lawyer = False
         if b is not None and verdict in ("pass", "fail"):
             vb = b.get("verdict", "unclear")

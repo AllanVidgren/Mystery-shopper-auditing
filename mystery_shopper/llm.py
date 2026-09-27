@@ -17,6 +17,8 @@ import httpx
 
 API_URL = "https://api.anthropic.com/v1/messages"
 API_VERSION = "2023-06-01"
+# floor for every request: leaves room for hidden reasoning in "thinking" models
+MIN_BUDGET = 2048
 
 
 class LLM(Protocol):
@@ -59,17 +61,22 @@ class ClaudeLLM:
         raise LLMError("Claude API: retries exhausted")
 
     def text(self, system: str, messages: list[dict], max_tokens: int = 800, temperature: float = 0.7) -> str:
-        data = self._post({
-            "model": self.model, "system": system, "messages": messages,
-            "max_tokens": max_tokens, "temperature": temperature,
-        })
+        budget = max(max_tokens, MIN_BUDGET)
+        for _ in range(3):
+            data = self._post({
+                "model": self.model, "system": system, "messages": messages,
+                "max_tokens": budget, "temperature": temperature,
+            })
+            if data.get("stop_reason") != "max_tokens":
+                break
+            budget *= 2
         return "".join(b.get("text", "") for b in data.get("content", []) if b.get("type") == "text").strip()
 
     def structured(self, system: str, messages: list[dict], schema: dict, name: str = "record",
                    max_tokens: int = 1200) -> dict:
         data = self._post({
             "model": self.model, "system": system, "messages": messages,
-            "max_tokens": max_tokens, "temperature": 0,
+            "max_tokens": max(max_tokens, MIN_BUDGET), "temperature": 0,
             "tools": [{"name": name, "description": "Return the result.", "input_schema": schema}],
             "tool_choice": {"type": "tool", "name": name},
         })
@@ -116,19 +123,31 @@ class OpenAICompatibleLLM:
     def _msgs(system: str, messages: list[dict]) -> list[dict]:
         return [{"role": "system", "content": system}] + messages
 
+    def _complete(self, payload: dict, max_tokens: int) -> dict:
+        """Call the API; if the answer was cut off by the token limit, retry with a larger budget.
+        "Thinking" models (e.g. recent Gemini versions) spend part of max_tokens on hidden
+        reasoning, so a small budget can leave a visible reply cut off mid-sentence."""
+        budget = max(max_tokens, MIN_BUDGET)
+        for _ in range(3):
+            data = self._post({**payload, "max_tokens": budget})
+            if data["choices"][0].get("finish_reason") != "length":
+                return data
+            logging.getLogger("mystery_shopper").info("  reply cut off at %d tokens, retrying with more", budget)
+            budget *= 2
+        raise LLMError(f"Reply still cut off at {budget // 2} tokens")
+
     def text(self, system, messages, max_tokens=800, temperature=0.7):
-        data = self._post({"model": self.model, "messages": self._msgs(system, messages),
-                           "max_tokens": max_tokens, "temperature": temperature})
+        data = self._complete({"model": self.model, "messages": self._msgs(system, messages),
+                               "temperature": temperature}, max_tokens)
         return (data["choices"][0]["message"].get("content") or "").strip()
 
     def structured(self, system, messages, schema, name="record", max_tokens=1200):
-        data = self._post({
-            "model": self.model, "messages": self._msgs(system, messages), "max_tokens": max_tokens,
-            "temperature": 0,
+        data = self._complete({
+            "model": self.model, "messages": self._msgs(system, messages), "temperature": 0,
             "tools": [{"type": "function", "function": {"name": name, "description": "Return the result.",
                                                         "parameters": schema}}],
             "tool_choice": {"type": "function", "function": {"name": name}},
-        })
+        }, max_tokens)
         msg = data["choices"][0]["message"]
         for call in msg.get("tool_calls") or []:
             fn = call.get("function", {})

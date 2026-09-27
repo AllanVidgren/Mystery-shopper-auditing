@@ -1,0 +1,14 @@
+# Demo campaign: every persona that matters for web chat, against the planted-flaw agent.
+# python -m mystery_shopper campaign examples/campaign.demo.yaml
+country: FI
+language: English
+targets_file: ../config/targets.example.yaml
+target: demo-sim-flawed
+runs:
+  - {persona: marcus, scenario: website_chat, repeat: 2}
+  - {persona: aino, scenario: website_chat}
+  - {persona: pierre, scenario: website_chat}
+  - {persona: max, scenario: website_chat}
+  - {persona: nina, scenario: website_chat}
+  - {persona: helmi, scenario: sales_call}
+  - {persona: marcus, scenario: website_chat, target: demo-sim-good}

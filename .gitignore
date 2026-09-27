@@ -1,0 +1,7 @@
+*.db
+__pycache__/
+.env
+config/targets.yaml
+.venv/
+*.zip
+.DS_Store

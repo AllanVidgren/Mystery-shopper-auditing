@@ -1,0 +1,16 @@
+<!doctype html><html><body>
+<button id="chat-launcher">Chat</button>
+<div id="widget" style="display:none">
+  <div id="log"><div class="bot">Hello! Welcome to SafeHome.</div></div>
+  <textarea id="msg"></textarea><button id="send">Send</button>
+</div>
+<script>
+document.getElementById('chat-launcher').onclick=()=>document.getElementById('widget').style.display='block';
+document.getElementById('send').onclick=()=>{
+  const t=document.getElementById('msg').value; document.getElementById('msg').value='';
+  const u=document.createElement('div'); u.className='user'; u.textContent=t; log.appendChild(u);
+  setTimeout(()=>{const b=document.createElement('div'); b.className='bot';
+    b.textContent=/price|cost/i.test(t)?'Plans start from 29.90 EUR per month.':'Shall I book an installation?';
+    log.appendChild(b);},400);
+};
+</script></body></html>

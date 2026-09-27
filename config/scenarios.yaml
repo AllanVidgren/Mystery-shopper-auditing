@@ -1,0 +1,24 @@
+# What the shopper is trying to achieve. The channel decides which rules are graded.
+
+scenarios:
+  - id: sales_call
+    channel: sales
+    goal: >
+      You are interested in a home alarm. Find out what it costs in total and what you
+      commit to. Behave exactly as your persona. Do not sign anything unless your
+      persona would.
+    max_turns: 12
+
+  - id: cancellation_call
+    channel: cancellation
+    goal: >
+      You want to cancel your alarm contract. Behave exactly as your persona. Use only
+      the test account details you were given.
+    max_turns: 12
+
+  - id: website_chat
+    channel: chat
+    goal: >
+      You are using the company's website chat to ask about a home alarm. Behave exactly
+      as your persona.
+    max_turns: 10

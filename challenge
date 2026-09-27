@@ -1,3 +1,4 @@
-git branch -M main
-git remote add origin https://github.com/KÄYTTÄJÄNIMESI/legal-mystery-shopper.git
-git push -u origin main
+cd ~/Git/mystery-shopper
+git init
+git add .
+git status

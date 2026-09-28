@@ -65,3 +65,25 @@ targets:
     input: "textarea"
     bot_messages: ".bot-message"
     reply_timeout_s: 30
+
+  # 4) A live chat answered by real customer-service staff (human mode).
+  #    Agree this with the company and its staff in advance, and report at process level.
+  - name: example-live-chat
+    type: browser
+    authorized: false            # set true + authorized_by once approved
+    authorized_by: ""
+    team: "Customer service chat"
+    url: https://www.example.com/
+    open_steps:
+      - click: "#chat-launcher"
+    input: "textarea"
+    bot_messages: ".agent-message"
+    human_mode: true
+    first_reply_timeout_s: 900   # queue
+    reply_timeout_s: 300
+    settle_s: 8                  # people often send 2-3 messages in a row
+    typing_indicator: ".typing"
+    ignore_messages: "(in queue|in line|joined the chat)"
+    typing_speed_cps: 6
+    think_s: [3, 8]
+    disclosure: "Hi! Before we start: I'm an AI test customer from the compliance team."

@@ -1,0 +1,27 @@
+<!doctype html><html><body>
+<!-- Imitates a live chat answered by a person: queue notice, typing indicator,
+     a slow reply split over two messages. Used by the tests. -->
+<button id="chat-launcher">Chat with us</button>
+<div id="widget" style="display:none">
+  <div id="log"><div class="msg agent system">You are number 1 in the queue.</div></div>
+  <div class="typing" style="display:none">Sara is typing…</div>
+  <textarea id="msg"></textarea><button id="send">Send</button>
+</div>
+<script>
+const log = document.getElementById('log'), typing = document.querySelector('.typing');
+const add = (cls, text) => { const d = document.createElement('div'); d.className = 'msg ' + cls; d.textContent = text; log.appendChild(d); };
+document.getElementById('chat-launcher').onclick = () => document.getElementById('widget').style.display = 'block';
+document.getElementById('send').onclick = () => {
+  const t = document.getElementById('msg').value; document.getElementById('msg').value = '';
+  add('user', t);
+  setTimeout(() => { typing.style.display = 'block'; }, 300);
+  setTimeout(() => {
+    if (/cost|price/i.test(t)) add('agent', 'Hi, Sara here! Our basic package is 39.90 EUR a month.');
+    else add('agent', 'Sure, let me check that for you.');
+  }, 900);
+  setTimeout(() => {
+    typing.style.display = 'none';
+    if (/cost|price/i.test(t)) add('agent', 'Installation is 199 EUR and the minimum contract is 36 months.');
+  }, 1900);
+};
+</script></body></html>

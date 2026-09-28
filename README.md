@@ -1,10 +1,11 @@
 # AI Mystery Shopper for legal compliance
 
 **Companies write compliant terms, but customers experience conversations.** This tool tests
-those conversations: AI "mystery shoppers" talk to a company's customer-service chat, and
-every conversation is checked against consumer protection and data protection rules. Each
-finding comes with a quote from the conversation and its legal basis, and a lawyer confirms
-it before anyone acts on it.
+those conversations. An AI "mystery shopper" contacts a company's customer service like a real
+customer would, asks the questions a customer would ask, and talks to the real employee (or the
+chatbot) on the other end. Afterwards it grades the conversation against consumer protection and
+data protection rules. Each finding comes with a quote from the conversation and its legal
+basis, and a lawyer confirms it before anyone acts on it.
 
 > **Background.** The idea came out of a legal AI hackathon, where our team's concept for a
 > home security company's consumer channels was chosen as the case company's favourite. This
@@ -27,9 +28,11 @@ it before anyone acts on it.
 
 ## How it works
 
-1. **AI customers.** Synthetic personas (a confused 86-year-old, a price-focused buyer, a
-   jailbreaker, a social engineer) hold real conversations with a chatbot through its API or
-   through a real browser.
+1. **AI customers, real counterparts.** Synthetic personas (a confused 86-year-old, a
+   price-focused buyer, a social engineer) hold real conversations with customer-service staff
+   in the website's live chat, or with a chatbot. With real staff, the shopper waits for
+   people, handles queues and replies split over several messages, types at a human pace, and
+   can say up front that it is an AI test customer.
 2. **A rulebook lawyers maintain.** 20 rules for sales, cancellation and chat, written in a
    YAML file: what to check, whether it is critical, and whether a failure is a **legal** or a
    **policy** breach. Lawyers change the rules without touching code.
@@ -156,6 +159,21 @@ Send `X-MS-Role: local:FI` or `X-MS-Role: group`, plus `Authorization: Bearer $M
 - A rule becomes a *systemic pattern* when it fails in 2 or more countries.
 - Individual findings appear only when a local lawyer escalates them.
 - No transcripts and no team labels.
+
+## Testing real employees: the legal questions
+
+The shopper's counterpart is usually a real person, which raises questions this project takes
+seriously rather than hiding:
+
+- **AI disclosure (AI Act Art. 50(1)).** An AI system that interacts with people must make that
+  clear unless it is obvious. The `disclosure` setting makes the shopper say so in its first
+  message. Running covert AI shoppers against staff would need a careful legal assessment first.
+- **Evaluating workers (AI Act Annex III(4)(b)).** AI used to evaluate the behaviour of workers
+  is high-risk. The tool is therefore designed to audit the *process* (scripts, information
+  given, cancellation flow), reports by team or script version rather than by person, and never
+  feeds into individual performance evaluation.
+- **Employee privacy.** In Finland, the Act on the Protection of Privacy in Working Life and the
+  Co-operation Act apply: staff are informed in advance, and a DPIA is done before use.
 
 ## Legal and privacy guardrails built in
 - **Synthetic shoppers only.** Cancellation tests use test accounts the company provides, never real customer data.

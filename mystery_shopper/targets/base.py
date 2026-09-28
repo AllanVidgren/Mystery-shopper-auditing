@@ -12,6 +12,7 @@ class Target:
 
     name: str = "target"
     team: Optional[str] = None  # team or script version label, never an individual
+    disclosure: Optional[str] = None  # optional first message: "I am an AI test customer..."
 
     def start(self) -> Optional[str]:
         """Open the conversation. May return the channel's greeting."""

@@ -510,5 +510,61 @@ class LiveRunRegressionTests(unittest.TestCase):
         self.assertEqual(g._finalize(LIB.rule("W4"), with_agent, None, turns).verdict, "fail")
 
 
+class HumanModeTests(unittest.TestCase):
+    """Live chat answered by a person: queue notices, typing, replies split over messages."""
+
+    def _serve(self):
+        import functools
+        from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
+        handler = functools.partial(SimpleHTTPRequestHandler, directory=str(ROOT / "examples"))
+        handler.log_message = lambda *a: None
+        srv = ThreadingHTTPServer(("127.0.0.1", 0), handler)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        return srv
+
+    def test_collects_split_reply_and_ignores_queue_notice(self):
+        try:
+            import playwright  # noqa: F401
+        except ImportError:
+            self.skipTest("playwright not installed")
+        srv = self._serve()
+        try:
+            t = build_target({
+                "name": "live", "type": "browser", "authorized": True, "authorized_by": "test",
+                "url": f"http://127.0.0.1:{srv.server_address[1]}/demo_human_chat.html",
+                "open_steps": [{"click": "#chat-launcher"}], "input": "#msg", "send": "#send",
+                "bot_messages": ".msg.agent", "human_mode": True, "reply_timeout_s": 20,
+                "settle_s": 0.8, "typing_indicator": ".typing", "ignore_messages": "in the queue",
+                "typing_speed_cps": 200, "think_s": [0, 0.1],
+                "disclosure": "Hi, I am an AI test customer from the compliance team."})
+            try:
+                self.assertIsNone(t.start())                              # queue notice ignored
+                reply = t.send("What does it cost?")
+                self.assertEqual(reply, "Hi, Sara here! Our basic package is 39.90 EUR a month.\n"
+                                        "Installation is 199 EUR and the minimum contract is 36 months.")
+                self.assertEqual(t.disclosure, "Hi, I am an AI test customer from the compliance team.")
+            finally:
+                t.close()
+        finally:
+            srv.shutdown()
+            srv.server_close()
+
+    def test_disclosure_is_first_shopper_turn(self):
+        from mystery_shopper.runner import converse
+        from mystery_shopper.targets.base import Target
+
+        class Echo(Target):
+            name = "echo"
+            def send(self, m):
+                return "ok: " + m
+
+        t = Echo()
+        t.disclosure = "I am an AI test customer."
+        from mystery_shopper.shopper import ScriptedShopper
+        turns = converse(ScriptedShopper(["What does it cost?"]), t, 5)
+        self.assertEqual([x.text for x in turns], ["I am an AI test customer.", "ok: I am an AI test customer.",
+                                                    "What does it cost?", "ok: What does it cost?"])
+
+
 if __name__ == "__main__":
     unittest.main()

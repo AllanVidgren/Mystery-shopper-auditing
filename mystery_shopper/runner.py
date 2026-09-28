@@ -21,14 +21,20 @@ def converse(shopper: Shopper, target: Target, max_turns: int) -> list[Turn]:
     greeting = target.start()
     if greeting:
         turns.append(Turn(n=1, speaker="agent", text=greeting))
+    if target.disclosure:  # the shopper says up front that it is an AI test customer
+        turns.append(Turn(n=len(turns) + 1, speaker="shopper", text=target.disclosure))
+        log.info("  [%d] shopper: %s", len(turns), target.disclosure)
+        reply = target.send(target.disclosure)
+        log.info("  [%d] agent:   %s", len(turns) + 1, reply or "")
+        turns.append(Turn(n=len(turns) + 1, speaker="agent", text=reply or "(no reply)"))
     for _ in range(max_turns):
         msg = shopper.next_message(turns)
         if msg is None:
             break
         turns.append(Turn(n=len(turns) + 1, speaker="shopper", text=msg))
-        log.info("  [%d] shopper: %s", len(turns), msg[:90])
+        log.info("  [%d] shopper: %s", len(turns), msg)
         reply = target.send(msg)
-        log.info("  [%d] agent:   %s", len(turns) + 1, (reply or "")[:90])
+        log.info("  [%d] agent:   %s", len(turns) + 1, reply or "")
         turns.append(Turn(n=len(turns) + 1, speaker="agent", text=reply or "(no reply)"))
     return turns
 

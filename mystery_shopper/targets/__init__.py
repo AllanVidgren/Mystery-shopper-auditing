@@ -21,13 +21,16 @@ def build_target(spec: dict, llm: Optional[LLM] = None) -> Target:
     if kind == "simulated":
         if llm is None:
             raise TargetError("Simulated target needs an LLM")
-        return SimulatedTarget(spec, llm)
-    if kind == "http":
-        return HttpTarget(spec)
-    if kind == "browser":
+        target: Target = SimulatedTarget(spec, llm)
+    elif kind == "http":
+        target = HttpTarget(spec)
+    elif kind == "browser":
         from .browser_target import BrowserTarget  # imported lazily: needs Playwright
-        return BrowserTarget(spec)
-    raise TargetError(f"Unknown target type: {kind}")
+        target = BrowserTarget(spec)
+    else:
+        raise TargetError(f"Unknown target type: {kind}")
+    target.disclosure = spec.get("disclosure")
+    return target
 
 
 __all__ = ["Target", "TargetError", "build_target"]

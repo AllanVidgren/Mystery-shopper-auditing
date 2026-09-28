@@ -3,7 +3,7 @@
 **Companies write compliant terms, but customers experience conversations.** This tool tests
 those conversations. An AI "mystery shopper" contacts a company's customer service like a real
 customer would, asks the questions a customer would ask, and talks to the real employee (or the
-chatbot) on the other end. Afterwards it grades the conversation against consumer protection and
+chatbot, like in this demo) on the other end. Afterwards it grades the conversation against consumer protection and
 data protection rules. Each finding comes with a quote from the conversation and its legal
 basis, and a lawyer confirms it before anyone acts on it.
 
